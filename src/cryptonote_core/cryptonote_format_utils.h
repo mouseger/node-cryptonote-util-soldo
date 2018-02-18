@@ -81,7 +81,7 @@ namespace cryptonote
   bool get_block_hashing_blob(const block& b, blobdata& blob);
   bool get_bytecoin_block_hashing_blob(const block& b, blobdata& blob);
   blobdata get_block_hashing_blob(const bb_block& b);
-  bool get_block_hash(const block& b, crypto::hash& res, uint64_t mergedMiningBlockVersion = BLOCK_MAJOR_VERSION_3);
+  bool get_block_hash(const block& b, crypto::hash& res);
   crypto::hash get_block_hash(const block& b);
   bool get_block_header_hash(const block& b, crypto::hash& res);
   bool get_block_longhash(const block& b, crypto::hash& res, uint64_t height);
@@ -89,7 +89,7 @@ namespace cryptonote
   bool get_bytecoin_block_longhash(const block& blk, crypto::hash& res);
   bool generate_genesis_block(block& bl);
   bool get_genesis_block_hash(crypto::hash& h);
-  bool parse_and_validate_block_from_blob(const blobdata& b_blob, block& b, bool mergedMining = true);
+  bool parse_and_validate_block_from_blob(const blobdata& b_blob, block& b);
   bool parse_and_validate_block_from_blob(const blobdata& b_blob, bb_block& b);
   bool get_inputs_money_amount(const transaction& tx, uint64_t& money);
   uint64_t get_outs_money_amount(const transaction& tx);
@@ -115,18 +115,6 @@ namespace cryptonote
     return r;
   }
   //---------------------------------------------------------------
-  template<class t_object>
-  bool t_serializable_object_to_blob(const t_object& to, blobdata& b_blob, bool mergedMining)
-  {
-    std::stringstream ss;
-    binary_archive<true> ba(ss);
-    auto ser = make_serializable_nomerge(const_cast<t_object&>(to));
-    bool r = ::serialization::serialize(ba, ser);
-    b_blob = ss.str();
-    return r;
-  }
-  //---------------------------------------------------------------
-  template<class t_object>
   blobdata t_serializable_object_to_blob(const t_object& to)
   {
     blobdata b;
@@ -211,7 +199,6 @@ namespace cryptonote
   //---------------------------------------------------------------
   blobdata block_to_blob(const block& b);
   bool block_to_blob(const block& b, blobdata& b_blob);
-  bool block_to_blob(const block& b, blobdata& b_blob, bool mergedMining);
   blobdata tx_to_blob(const transaction& b);
   bool tx_to_blob(const transaction& b, blobdata& b_blob);
   void get_tx_tree_hash(const std::vector<crypto::hash>& tx_hashes, crypto::hash& h);
