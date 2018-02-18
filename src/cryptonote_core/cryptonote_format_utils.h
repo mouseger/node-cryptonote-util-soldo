@@ -115,6 +115,7 @@ namespace cryptonote
     return r;
   }
   //---------------------------------------------------------------
+  template<class t_object>
   blobdata t_serializable_object_to_blob(const t_object& to)
   {
     blobdata b;
