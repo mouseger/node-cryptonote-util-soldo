@@ -11,7 +11,7 @@
 #define BLOCK_MAJOR_VERSION_4                           4
 
 #define BLOCK_MINOR_VERSION_0                           0
-#define TRANSACTION_VERSION_1                           1
+#define BLOCK_MINOR_VERSION_1                           1
 
 #define TRANSACTION_VERSION_1                           1
 #define TRANSACTION_VERSION_2                           2
