@@ -190,7 +190,7 @@ namespace cryptonote
   {
   public:
     std::vector<std::vector<crypto::signature> > signatures; //count signatures  always the same as inputs count
-	rct::rctSig rct_signatures;
+    rct::rctSig rct_signatures;
 
     transaction();
     virtual ~transaction();
@@ -199,41 +199,40 @@ namespace cryptonote
     BEGIN_SERIALIZE_OBJECT()
       FIELDS(*static_cast<transaction_prefix *>(this))
 
-	  if (version == 1)
+      if (version == 1)
       {
+        ar.tag("signatures");
+        ar.begin_array();
+        PREPARE_CUSTOM_VECTOR_SERIALIZATION(vin.size(), signatures);
+        bool signatures_not_expected = signatures.empty();
+        if (!signatures_not_expected && vin.size() != signatures.size())
+          return false;
 
-		  ar.tag("signatures");
-		  ar.begin_array();
-		  PREPARE_CUSTOM_VECTOR_SERIALIZATION(vin.size(), signatures);
-		  bool signatures_not_expected = signatures.empty();
-		  if (!signatures_not_expected && vin.size() != signatures.size())
-			return false;
+        for (size_t i = 0; i < vin.size(); ++i)
+        {
+          size_t signature_size = get_signature_size(vin[i]);
+          if (signatures_not_expected)
+          {
+            if (0 == signature_size)
+              continue;
+            else
+              return false;
+          }
 
-		  for (size_t i = 0; i < vin.size(); ++i)
-		  {
-			size_t signature_size = get_signature_size(vin[i]);
-			if (signatures_not_expected)
-			{
-			  if (0 == signature_size)
-				continue;
-			  else
-				return false;
-			}
+          PREPARE_CUSTOM_VECTOR_SERIALIZATION(signature_size, signatures[i]);
+          if (signature_size != signatures[i].size())
+            return false;
 
-			PREPARE_CUSTOM_VECTOR_SERIALIZATION(signature_size, signatures[i]);
-			if (signature_size != signatures[i].size())
-			  return false;
+          FIELDS(signatures[i]);
 
-			FIELDS(signatures[i]);
-
-			if (vin.size() - i > 1)
-			  ar.delimit_array();
-		  }
-		  ar.end_array();
-	  }
-	  else
-	  {
-	    ar.tag("rct_signatures");
+          if (vin.size() - i > 1)
+            ar.delimit_array();
+        }
+        ar.end_array();
+      }
+      else
+      {
+        ar.tag("rct_signatures");
         if (!vin.empty())
         {
           ar.begin_object();
@@ -250,7 +249,7 @@ namespace cryptonote
             ar.end_object();
           }
         }
-	  }
+      }
     END_SERIALIZE()
 
   private:
@@ -381,6 +380,8 @@ namespace cryptonote
   /*                                                                      */
   /************************************************************************/
 
+  const uint8_t CURRENT_BYTECOIN_BLOCK_MAJOR_VERSION = 1;
+
   struct bytecoin_block
   {
     uint8_t major_version;
@@ -479,18 +480,17 @@ namespace cryptonote
 
     BEGIN_SERIALIZE()
       VARINT_FIELD(major_version)
-      if(major_version > BLOCK_MAJOR_VERSION_4) 
-		return false;
+      if(major_version > BLOCK_MAJOR_VERSION_4) return false;
       VARINT_FIELD(minor_version)
-	  if (major_version < BLOCK_MAJOR_VERSION_3)
-	  {
-		VARINT_FIELD(timestamp)
-		FIELD(prev_id)
-		FIELD(nonce)
-	  } else 
-	  {
-		FIELD(prev_id)
-	  }
+      if (major_version < BLOCK_MAJOR_VERSION_3)
+      {
+        VARINT_FIELD(timestamp)
+      }
+      FIELD(prev_id)
+      if (major_version < BLOCK_MAJOR_VERSION_3)
+      {
+        FIELD(nonce)
+      }
     END_SERIALIZE()
   };
 
@@ -503,7 +503,7 @@ namespace cryptonote
 
     BEGIN_SERIALIZE_OBJECT()
       FIELDS(*static_cast<block_header *>(this))
-      if (major_version >= BLOCK_MAJOR_VERSION_3)
+      if (BLOCK_MAJOR_VERSION_3 <= major_version)
       {
         auto sbb = make_serializable_bytecoin_block(*this, false, false);
         FIELD_N("parent_block", sbb);
@@ -512,6 +512,7 @@ namespace cryptonote
       FIELD(tx_hashes)
     END_SERIALIZE()
   };
+
 
   inline serializable_bytecoin_block make_serializable_bytecoin_block(const block& b, bool hashing_serialization, bool header_only)
   {
@@ -571,23 +572,23 @@ namespace cryptonote
     END_KV_SERIALIZE_MAP()
   };
 
-	struct integrated_address {
-		  account_public_address adr;
-		  crypto::hash8 payment_id;
+  struct integrated_address {
+          account_public_address adr;
+          crypto::hash8 payment_id;
+    
+          BEGIN_SERIALIZE_OBJECT()
+          FIELD(adr)
+          FIELD(payment_id)
+          END_SERIALIZE()
+    
+          BEGIN_KV_SERIALIZE_MAP()
+          KV_SERIALIZE(adr)
+          KV_SERIALIZE(payment_id)
+          END_KV_SERIALIZE_MAP()
+      };
 
-		  BEGIN_SERIALIZE_OBJECT()
-		  FIELD(adr)
-		  FIELD(payment_id)
-		  END_SERIALIZE()
 
-		  BEGIN_KV_SERIALIZE_MAP()
-		  KV_SERIALIZE(adr)
-		  KV_SERIALIZE(payment_id)
-		  END_KV_SERIALIZE_MAP()
-	  };
-
-  
-  struct keypair
+    struct keypair
   {
     crypto::public_key pub;
     crypto::secret_key sec;
@@ -601,7 +602,7 @@ namespace cryptonote
   };
   //---------------------------------------------------------------
 
-  
+}
 
 BLOB_SERIALIZER(cryptonote::txout_to_key);
 BLOB_SERIALIZER(cryptonote::bb_txout_to_key);
