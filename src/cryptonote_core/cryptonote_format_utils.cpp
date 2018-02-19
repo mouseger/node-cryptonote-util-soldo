@@ -870,11 +870,6 @@ namespace cryptonote
     return t_serializable_object_to_blob(b);
   }
   //---------------------------------------------------------------
-  bool block_to_blob(const block& b, blobdata& b_blob, bool mergedMining)
-  {
-    return t_serializable_object_to_blob(b, b_blob, mergedMining);
-  }
-  //---------------------------------------------------------------
   bool block_to_blob(const block& b, blobdata& b_blob)
   {
     return t_serializable_object_to_blob(b, b_blob);
